@@ -1,0 +1,15 @@
+name: p1
+channels:
+  - conda-forge
+dependencies:
+  - pip
+  - setuptools
+  - wheel
+  - flake8
+  - sphinx
+  - click
+  - coverage
+  - awscli
+  - python-dotenv>=0.5.1
+  - python=3
+
