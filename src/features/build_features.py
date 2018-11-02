@@ -56,7 +56,6 @@ class Features(nn.Module):
         self.features = nn.Sequential(*list(original_model.features.children()))
 
     def forward(self, x):
-        print('Entrooo')
         x = self.features(x)
         x = x.view(x.shape[0], -1)
         return x
