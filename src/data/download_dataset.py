@@ -18,21 +18,20 @@ def main():
     data_dir = os.path.join(project_dir, 'data')
 
     print('Generating preprocessed data...')
-
     transform = transforms.Compose(
-        [transforms.Resize((224, 224)),
-         transforms.ToTensor(),
-         transforms.Lambda(lambda x: x.repeat(3, 1, 1)),
-         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
-    train_dataset = torchvision.datasets.MNIST(root=data_dir, train=True, download=True, transform=transform)
-    train_data = torch.stack(tuple([i for i, _ in train_dataset]), 0)
-    test_dataset = torchvision.datasets.MNIST(root=data_dir, train=False, download=False, transform=transform)
-    test_data = torch.stack(tuple([i for i, _ in test_dataset]), 0)
+        [transforms.ToTensor(),
+         transforms.Normalize((0.1307,), (0.3081,))]
+    )
 
+    train_dataset = torchvision.datasets.MNIST(
+        root=data_dir, train=True, download=True, transform=transform)
+    train_data = torch.stack(tuple([i for i, _ in train_dataset]), 0)
+    test_dataset = torchvision.datasets.MNIST(
+        root=data_dir, train=False, download=False, transform=transform)
+    test_data = torch.stack(tuple([i for i, _ in test_dataset]), 0)
     print('Done!')
 
     print('Removing ubyte files...')
-
     for file in os.listdir(os.path.join(data_dir, 'raw')):
         if not file.startswith('.'):
             os.remove(os.path.join(data_dir, 'raw', file))
@@ -40,7 +39,6 @@ def main():
               os.path.join(data_dir, 'raw', 'training.pt'))
     os.rename(os.path.join(data_dir, 'processed', 'test.pt'),
               os.path.join(data_dir, 'raw', 'test.pt'))
-
     print('Done!')
 
     with open(os.path.join(data_dir, 'processed', 'training.pt'), 'wb') as f:
@@ -57,3 +55,4 @@ if __name__ == '__main__':
     # load up the .env entries as environment variables
     load_dotenv(find_dotenv())
     main()
+
