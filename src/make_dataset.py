@@ -40,4 +40,4 @@ vectors = np.delete(vectors, (0), axis=0)
 labels = np.delete(labels, (0), axis=0)
 
 to_save = {'data': vectors, 'labels': labels}
-np.save('../data/vectors.npy', to_save)
+np.save('/data/vectors.npy', to_save)
