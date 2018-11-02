@@ -24,9 +24,13 @@ else
 endif
 	pip install -r requirements.txt
 
-## Make Dataset
+## Download raw and preprocessed Dataset
 data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py
+	$(PYTHON_INTERPRETER) src/data/download_dataset.py
+
+## Extract features from Dataset
+features: requirements
+	$(PYTHON_INTERPRETER) src/features/build_features.py
 
 ## Delete all compiled Python files
 clean:
