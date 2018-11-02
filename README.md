@@ -14,6 +14,8 @@ Project Organization
 + **report/**: fact bombs for dr. tapp
 + `requirements.txt`: see `environment.yml` for conda environment
 + `setup.py`: i don't think we need this.
++ `setup.sh`: create conda environment.
++ `source.me`: a totally non-general way for jdv to load conda environments on his workstation.
 + **src/**
     + **data/**: data download + preprocessing script
     + **features/**: runs trained lenet on inputs to get distance values

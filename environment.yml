@@ -13,4 +13,5 @@ dependencies:
   - python=3
   - pytorch
   - torchvision
+  - ipython
 
