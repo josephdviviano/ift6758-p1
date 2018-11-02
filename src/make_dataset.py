@@ -20,7 +20,7 @@ train_loader = torch.utils.data.DataLoader(
     batch_size=1000, shuffle=False)
 
 model = Net()
-model.load_state_dict(torch.load('model.pt'))
+model.load_state_dict(torch.load('models/model.pt'))
 model.eval()
 
 vectors = np.empty((1, 50))
@@ -40,4 +40,4 @@ vectors = np.delete(vectors, (0), axis=0)
 labels = np.delete(labels, (0), axis=0)
 
 to_save = {'data': vectors, 'labels': labels}
-np.save('/data/vectors.npy', to_save)
+np.save('data/vectors.npy', to_save)
