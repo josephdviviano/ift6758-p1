@@ -32,7 +32,6 @@ for data, target in tqdm(train_loader):
     labels = np.append(labels, target.detach().numpy(), axis=0)
 
 for data, target in tqdm(test_loader):
-    i += target.shape[0]
     vec = model(data, get_vectors=True).detach().numpy()
     vectors = np.append(vectors, vec, axis=0)
     labels = np.append(labels, target.detach().numpy(), axis=0)
