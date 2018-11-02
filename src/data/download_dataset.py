@@ -18,6 +18,7 @@ def main():
     data_dir = os.path.join(project_dir, 'data')
 
     print('Generating preprocessed data...')
+    # normalization numbers taken from here: https://discuss.pytorch.org/t/normalization-in-the-mnist-example/457
     transform = transforms.Compose(
         [transforms.ToTensor(),
          transforms.Normalize((0.1307,), (0.3081,))]
