@@ -14,4 +14,4 @@ dependencies:
   - pytorch
   - torchvision
   - ipython
-
+  - scikit-bio # for pcoa

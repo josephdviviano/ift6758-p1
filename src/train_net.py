@@ -107,7 +107,7 @@ def main():
         test(args, model, device, test_loader)
 
     # Save model
-    torch.save(model.state_dict(), 'model.pt')
+    torch.save(model.state_dict(), 'models/model.pt')
 
 if __name__ == '__main__':
     main()
