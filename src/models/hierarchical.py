@@ -32,12 +32,13 @@ def match_labels(a, b):
 
     Inspired by http://things-about-r.tumblr.com/post/36087795708/matching-clustering-solutions-using-the-hungarian
     """
+    a = np.array(a)
+    b = np.array(b)
     ids_a = np.unique(a)
     ids_b = np.unique(b)
 
     assert len(a) == len(b)
     assert len(ids_a) == len(ids_b)
-
 
     # construct a distance matrix D between a and b
     n = len(ids_a)
@@ -45,26 +46,21 @@ def match_labels(a, b):
 
     for x in np.arange(n):
         for y in np.arange(n):
-            idx_a = np.where(a == x)[0]
-            idx_b = np.where(b == y)[0]
+            idx_a = np.where(a-1 == x)[0]
+            idx_b = np.where(b-1 == y)[0]
             n_int = len(np.intersect1d(idx_a, idx_b))
             # distance = (# in cluster) - 2*sum(# in intersection)
             D[x,y] = (len(idx_a) + len(idx_b) - 2*n_int)
 
     # permute labels w/ minimum weighted bipartite matching (hungarian method)
     idx_D_x, idx_D_y = linear_sum_assignment(D)
-    mappings = np.hstack((np.atleast_2d(idx_D_x).T, np.atleast_2d(idx_D_y).T))
+    b_out = np.zeros(len(b))
 
+    for i, c in enumerate(idx_D_y):
+        idx_map = np.where(b == c+1) # +1 to keep indicies aligned
+        b_out[idx_map] = i+1
 
-    # TODO -- LINK MAPPINGS WITH OUTPUTS
-    yp_out = np.zeros(len(yp))
-
-    for c in np.arange(k):
-        idx_map = np.where(yp == c)
-        yp_out[idx_map] = mappings[c, 1]
-
-
-    return(mappings)
+    return(b_out)
 
 
 def convert_ds_to_np(D):
