@@ -32,10 +32,14 @@ train_labels = y_train[0:2000]
 mnist_test = X_test[0:2000, :]
 test_labels = y_test[0:2000]
 
+mnist_distances = distance.pdist(mnist_train, 'cosine')
+features_distances = distance.pdist(features_test, 'cosine')
+mnist_distances = distance.squareform(mnist_distances)
+features_distances = distance.squareform(features_distances)
 
-MDS = manifold.MDS(n_jobs=4)
-mds_features = MDS.fit_transform(features_test)
-mds_mnist = MDS.fit_transform(mnist_test)
+MDS = manifold.MDS(n_jobs=4, dissimilarity='precomputed')
+mds_features = MDS.fit_transform(features_distances)
+mds_mnist = MDS.fit_transform(mnist_distances)
 
 knn = np.array([1, 2, 3, 5, 10, 15, 20, 25, 30])
 isomaps_features = []
@@ -58,9 +62,9 @@ fig, ax = plt.subplots()
 for g in np.unique(test_labels):
     ix = np.where(test_labels == g)
     ax.scatter(mds_features[ix, 0], mds_features[ix, 1], label=g)
-ax.legend()
+ax.legend(loc='upper right')
 plt.title('PCoA using LeNet features')
-# plt.savefig('pcoa_features.png')
+plt.savefig('pcoa_features.png')
 plt.show()
 fig, ax = plt.subplots()
 #
@@ -69,7 +73,7 @@ for g in np.unique(test_labels):
     ax.scatter(mds_mnist[ix, 0], mds_mnist[ix, 1], label=g)
 plt.title('PCoA using raw images')
 ax.legend()
-# plt.savefig('pcoa_mnist.png')
+plt.savefig('pcoa_mnist.png')
 plt.show()
 
 fig, axes = plt.subplots(3, 3, figsize=(15, 15))
@@ -83,7 +87,7 @@ for i, ax in enumerate(fig.axes):
     j += 1
     ax.legend()
 plt.tight_layout()
-# plt.savefig('features.png')
+plt.savefig('features.png')
 plt.show()
 
 fig, axes = plt.subplots(3, 3, figsize=(15, 15))
@@ -97,10 +101,10 @@ for i, ax in enumerate(fig.axes):
     j += 1
     ax.legend()
 plt.tight_layout()
-# plt.savefig('mnist.png')
+plt.savefig('mnist.png')
 plt.show()
 
-
+x = 1
 
 
 
