@@ -37,7 +37,7 @@ MDS = manifold.MDS(n_jobs=4)
 mds_features = MDS.fit_transform(features_test)
 mds_mnist = MDS.fit_transform(mnist_test)
 
-knn = np.array([5, 5, 5, 5, 5, 5, 5, 5, 5])
+knn = np.array([1, 2, 3, 5, 10, 15, 20, 25, 30])
 isomaps_features = []
 isomaps_mnist = []
 # isomap
@@ -101,7 +101,6 @@ plt.tight_layout()
 plt.show()
 
 
-x = 1
 
 
 
