@@ -2,7 +2,7 @@
 from copy import copy
 from pathlib import Path
 from scipy.optimize import linear_sum_assignment
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
 from sklearn.cluster import AgglomerativeClustering as hc
 from sklearn.model_selection import StratifiedKFold, GridSearchCV
 import numpy as np
@@ -10,10 +10,13 @@ import os
 import torch
 
 SETTINGS = {
-    'cv_iter': 100,
-    'cv_score': 'f1_macro',
-    'n_cv': 3,
     'n_repetitions': 10
+}
+
+RESULTS = {
+    'test':  {'accuracy': [], 'confusion': []},
+    'train': {'accuracy': [], 'confusion': []},
+    'best_model': None, 'best_acc' : 0
 }
 
 
@@ -49,7 +52,8 @@ def match_labels(a, b):
             idx_a = np.where(a == x)[0]
             idx_b = np.where(b == y)[0]
             n_int = len(np.intersect1d(idx_a, idx_b))
-            # distance = (# in cluster) - 2*sum(# in intersection)
+
+            # distance = (# in label) - 2*sum(# in intersection)
             D[x,y] = (len(idx_a) + len(idx_b) - 2*n_int)
 
     # permute labels w/ minimum weighted bipartite matching (hungarian method)
@@ -91,33 +95,23 @@ def hierarchical(test_mode=False):
 
     model = hc(n_clusters=10, affinity ='euclidean') # 'precomputed'
 
-    results = {
-        'test':  {'loss': [], 'accuracy': [], 'confusion': [], 'errors': []},
-        'train': {'loss': [], 'accuracy': [], 'confusion': []},
-        'best_model': None, 'best_score' : 0
-    }
 
-    best_score = 0
     for i in range(SETTINGS['n_repetitions']):
         model.fit(X)
 
         y_pred = model.labels_
         y_pred = match_labels(y, y_pred)
 
-        import IPython; IPython.embed()
+        this_acc = accuracy_score(y_pred, y)
+        RESULTS['test']['accuracy'].append(this_acc)
+        RESULTS['test']['confusion'].append(confusion_matrix(y_pred, y))
 
-        this_score = accuracy_score(y_pred, y)
-        results['test']['accuracy'].append(this_score)
-
-        if this_score > best_score:
+        if this_acc > RESULTS['best_acc']:
             print('[{}/{}]: new model found {}/{}'.format(
-                i+1, SETTINGS['n_folds'], this_score, results['best_score']))
-            results['best_score'] = this_score
-            results['best_model'] = copy(model)
+                i+1, SETTINGS['n_repetitions'], this_acc, RESULTS['best_acc']))
+            RESULTS['best_acc'] = this_acc
+            RESULTS['best_model'] = copy(model)
 
-    # get test performance with best model:
-    y_pred = best_model.predict(X_test)
-    test_score = accuracy_score(y_pred, y_test)
+    return(RESULTS)
 
-    return(best_model, test_score)
 
