@@ -2,8 +2,9 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from sklearn import metrics
+from src.models.helper import assignment
 from sklearn import datasets
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import pairwise_distances
 from sklearn.base import BaseEstimator, ClassifierMixin
 
@@ -11,7 +12,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 def cluster(distance_matrix, n_clusters):
     m = distance_matrix.shape[0]  # number of points
 
-    # Pick k random medoids.
+    # Pick k  medoids.
     curr_medoids = generate_initial_medoids(distance_matrix, n_clusters)
     old_medoids = np.array([-1] * n_clusters)  # Doesn't matter what we initialize these to.
     new_medoids = np.array([-1] * n_clusters)
@@ -66,7 +67,7 @@ class KMedoids(BaseEstimator, ClassifierMixin):
         self.n_clusters = n_clusters
         self.metric = metric
 
-    def fit(self, X):
+    def fit(self, X, y):
         """
         This should fit classifier. All the "work" should be done here.
 
@@ -78,13 +79,17 @@ class KMedoids(BaseEstimator, ClassifierMixin):
 
         distance_matrix = pairwise_distances(X, metric=self.metric)
         self.labels_, self.cluster_centers_ = cluster(distance_matrix, self.n_clusters)
+        self.cluster_medoids_ = X[self.cluster_centers_]
+        print(self.cluster_medoids_)
+        self.transformation_ = assignment(self.labels_, y)
 
         return self
 
     def _predict_single(self, x):
         # returns True/False according to fitted classifier
-        # notice underscore on the beginning
-        return np.argmin([pairwise_distances(i, x, metric=self.metric) for i in self.cluster_centers_])
+        # notice underscore on the beginning\
+        distances_to_cluster_medoids = [pairwise_distances(i.reshape((-1, 1)).T, x, metric=self.metric) for i in self.cluster_medoids_]
+        return self.transformation_[self.cluster_centers_[np.argmin(distances_to_cluster_medoids)]]
 
     def predict(self, X):
         try:
@@ -92,7 +97,7 @@ class KMedoids(BaseEstimator, ClassifierMixin):
         except AttributeError:
             raise RuntimeError("You must train classifer before predicting data!")
 
-        return [self._predict_single(x) for x in X]
+        return [self._predict_single(x.reshape((1, -1))) for x in X]
 
     # def score(self, X, y=None):
     #     # counts number of values bigger than mean
@@ -114,7 +119,9 @@ if __name__ == '__main__':
     for name, est in estimators:
         fig = plt.figure(fignum, figsize=(4, 3))
         ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
-        est.fit(X)
+        est.fit(X, y)
+        accuracy = accuracy_score(y, est.predict(X))
+        fig.text(-0.8, 0.9, 'Accuracy: {}'.format(accuracy))
         labels = est.labels_
         ax.scatter(X[:, 3], X[:, 0], X[:, 2],
                    c=labels.astype(np.float), edgecolor='k')
@@ -125,7 +132,7 @@ if __name__ == '__main__':
         ax.set_xlabel('Petal width')
         ax.set_ylabel('Sepal length')
         ax.set_zlabel('Petal length')
-        ax.set_title(titles[fignum - 1])
+        ax.set_title(titles[fignum - 1]+', Accuracy: {0:.2f}'.format(accuracy))
         ax.dist = 12
         fignum = fignum + 1
         fig.show()
@@ -156,3 +163,4 @@ if __name__ == '__main__':
     ax.dist = 12
 
     fig.show()
+
