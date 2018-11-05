@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
@@ -17,6 +18,14 @@ def assignment(assigned_clusters, correct_labels):
     classes_index, clusters_index = linear_sum_assignment(cost_matrix)
     transformation = dict(zip(unique_clusters[list(clusters_index)], unique_classes[list(classes_index)]))
     return transformation
+
+def convert_ds_to_np(D):
+    """torch ds --> numpy matrix. x becomes a (n x m) matrix."""
+    X, y = torch.load(D)
+    X = X.numpy().swapaxes(1,3).squeeze()            # make (n x row x col)
+    X = X.reshape(X.shape[0], X.shape[1]*X.shape[2]) # make (n x m)
+
+    return(X, y.numpy())
 
 
 if __name__ == '__main__':
