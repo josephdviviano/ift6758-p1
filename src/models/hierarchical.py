@@ -13,7 +13,7 @@ SETTINGS = {
     'cv_iter': 100,
     'cv_score': 'f1_macro',
     'n_cv': 3,
-    'n_folds': 10
+    'n_repetitions': 10
 }
 
 
@@ -46,8 +46,8 @@ def match_labels(a, b):
 
     for x in np.arange(n):
         for y in np.arange(n):
-            idx_a = np.where(a-1 == x)[0]
-            idx_b = np.where(b-1 == y)[0]
+            idx_a = np.where(a == x)[0]
+            idx_b = np.where(b == y)[0]
             n_int = len(np.intersect1d(idx_a, idx_b))
             # distance = (# in cluster) - 2*sum(# in intersection)
             D[x,y] = (len(idx_a) + len(idx_b) - 2*n_int)
@@ -57,8 +57,8 @@ def match_labels(a, b):
     b_out = np.zeros(len(b))
 
     for i, c in enumerate(idx_D_y):
-        idx_map = np.where(b == c+1) # +1 to keep indicies aligned
-        b_out[idx_map] = i+1
+        idx_map = np.where(b == c)
+        b_out[idx_map] = i
 
     return(b_out)
 
@@ -72,55 +72,48 @@ def convert_ds_to_np(D):
     return(X, y.numpy())
 
 
-def hierarchical():
+def hierarchical(test_mode=False):
 
     TRAIN_DATA = os.path.join(
         Path(__file__).resolve().parents[2], 'data', 'processed', 'training.pt')
     TEST_DATA = os.path.join(
         Path(__file__).resolve().parents[2], 'data', 'processed', 'test.pt')
 
+    # merge X and y for unsupervised case
     X_train, y_train = convert_ds_to_np(TRAIN_DATA)
     X_test, y_test = convert_ds_to_np(TEST_DATA)
+    X = np.vstack((X_train, X_test))
+    y = np.concatenate((y_train, y_test))
 
-    clf = hc(n_clusters=10, affinity ='euclidean') # 'precomputed'
+    if test_mode:
+        X = X[:100, :]
+        y = y[:100]
 
-    settings = {
-        'linkage': ['ward', 'complete', 'average', 'single']
-    }
-
-    model = GridSearchCV(
-        clf, settings, n_jobs=-1, scoring=SETTINGS['cv_score']
-    )
-
-    kf = StratifiedKFold(n_splits=SETTINGS['n_folds'], shuffle=True)
+    model = hc(n_clusters=10, affinity ='euclidean') # 'precomputed'
 
     results = {
         'test':  {'loss': [], 'accuracy': [], 'confusion': [], 'errors': []},
         'train': {'loss': [], 'accuracy': [], 'confusion': []},
-        'cv': {}
+        'best_model': None, 'best_score' : 0
     }
 
-    best_model = None
     best_score = 0
-    for i, (train_idx, valid_idx) in enumerate(kf.split(X_train, y_train)):
-        X_trn = X_train[train_idx]
-        X_vld = X_train[valid_idx]
-        y_trn = y_train[train_idx]
-        y_vld = y_train[valid_idx]
+    for i in range(SETTINGS['n_repetitions']):
+        model.fit(X)
 
-        model.fit(X_trn, y_trn)
+        y_pred = model.labels_
+        y_pred = match_labels(y, y_pred)
 
         import IPython; IPython.embed()
 
-        y_pred = model.predict(X_vld)
-        this_score = accuracy_score(y_pred, y_vld)
+        this_score = accuracy_score(y_pred, y)
+        results['test']['accuracy'].append(this_score)
 
         if this_score > best_score:
             print('[{}/{}]: new model found {}/{}'.format(
-                i+1, SETTINGS['n_folds'], this_score, best_score))
-            best_score = this_score
-            best_model = copy(model)
-
+                i+1, SETTINGS['n_folds'], this_score, results['best_score']))
+            results['best_score'] = this_score
+            results['best_model'] = copy(model)
 
     # get test performance with best model:
     y_pred = best_model.predict(X_test)
