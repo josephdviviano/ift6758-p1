@@ -18,7 +18,7 @@ def hierarchical(test_mode=False, custom_data=False):
 
     results = {
         'test':  {'accuracy': [], 'confusion': []},
-        'best_model': None, 'best_acc' : 0
+        'best_model': None, 'best_acc' : 0, 'lost_subjects' : 0
     }
 
     settings = {'n_repetitions': 10, 'n_samples': 2000}
@@ -51,10 +51,20 @@ def hierarchical(test_mode=False, custom_data=False):
 
     model = hc(n_clusters=10, affinity=affinity, linkage=linkage)
 
+    # remove subject with no activation values
+    bad_idx = np.where(np.sum(X, axis=1) == 0)[0]
+    idx = np.setdiff1d(np.arange(X.shape[0]), bad_idx)
+    n = len(idx) # number of remaining subjects
+
+    X = X[idx, :]
+    y = y[idx]
+
+    results['lost_subjects'] = len(bad_idx)
+
     for i in range(settings['n_repetitions']):
 
         # random sampling of dataset
-        idx = np.arange(70000)
+        idx = np.arange(n)
         np.random.shuffle(idx)
 
         X_samp = X[idx[:settings['n_samples']], :]
@@ -69,9 +79,9 @@ def hierarchical(test_mode=False, custom_data=False):
         results['test']['accuracy'].append(this_acc)
         results['test']['confusion'].append(confusion_matrix(y_pred, y_samp))
 
-        if this_acc > RESULTS['best_acc']:
-            print('[{}/{}]: new model found {}/{}'.format(
-                i+1, settings['n_repetitions'], this_acc, results['best_acc']))
+        print('[{}/{}]: this={} : best={}'.format(
+            i+1, settings['n_repetitions'], this_acc, results['best_acc']))
+        if this_acc > results['best_acc']:
             results['best_acc'] = this_acc
             results['best_model'] = copy(model)
 

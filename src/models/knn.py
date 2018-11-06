@@ -88,9 +88,9 @@ def knn(test_mode=False, custom_data=False):
         results['train']['accuracy'].append(this_acc)
         results['train']['confusion'].append(confusion_matrix(y_pred, y_vld))
 
+        print('[{}/{}]: this={} : best={}'.format(
+            i+1, settings['n_folds'], this_acc, results['best_acc']))
         if this_acc > results['best_acc']:
-            print('[{}/{}]: new model found {}/{}'.format(
-                i+1, settings['n_folds'], this_acc, results['best_acc']))
             results['best_acc'] = this_acc
             results['best_model'] = copy(model)
 
