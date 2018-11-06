@@ -12,9 +12,14 @@ import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def main():
-    knn_results = knn(test_mode=True)
-    hierarchical_results = hierarchical(test_mode=True)
 
+    test = True
+    knn_results_img = knn(test_mode=test)
+    knn_results_vec = knn(test_mode=test, custom_data=True)
+    hierarchical_results_img = hierarchical(test_mode=test)
+    hierarchical_results_vec = hierarchical(test_mode=test, custom_data=True)
+
+    print('***done!***')
     import IPython; IPython.embed()
 
 if __name__ == '__main__':
