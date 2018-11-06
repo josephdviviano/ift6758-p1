@@ -3,9 +3,11 @@ from copy import copy
 from pathlib import Path
 from scipy.stats import randint
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
+from sklearn.metrics.pairwise import cosine_distances
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from sklearn.neighbors import KNeighborsClassifier as knc
 from sklearn.pipeline import Pipeline
+from numpy.linalg import norm
 import numpy as np
 import os
 import torch
@@ -15,7 +17,8 @@ SETTINGS = {
     'cv_iter': 100,
     'cv_score': 'accuracy',
     'n_cv': 3,
-    'n_folds': 10
+    'n_folds': 10,
+    'n_samples': 1000,
 }
 
 RESULTS = {
@@ -24,6 +27,9 @@ RESULTS = {
     'best_model': None, 'best_acc' : 0
 }
 
+
+def cosine(x, y):
+    return(1 - (x.dot(y) / (norm(x) + norm(y))))
 
 def convert_ds_to_np(D):
     """torch ds --> numpy matrix. x becomes a (n x m) matrix."""
@@ -34,15 +40,31 @@ def convert_ds_to_np(D):
     return(X, y.numpy())
 
 
-def knn(test_mode=False):
+def knn(test_mode=False, custom_data=False):
 
-    TRAIN_DATA = os.path.join(
-        Path(__file__).resolve().parents[2], 'data', 'processed', 'training.pt')
-    TEST_DATA = os.path.join(
-        Path(__file__).resolve().parents[2], 'data', 'processed', 'test.pt')
+    data_path = os.path.join(
+        Path(__file__).resolve().parents[2], 'data', 'processed')
 
-    X_train, y_train = convert_ds_to_np(TRAIN_DATA)
-    X_test, y_test = convert_ds_to_np(TEST_DATA)
+    if custom_data:
+        data = np.load(os.path.join(data_path, 'vectors.npy'))
+        X = data.item()['data']
+        y = data.item()['labels']
+
+        X_train = X[:60000, :]
+        X_test = X[60000:, :]
+        y_train = y[:60000]
+        y_test = y[60000:]
+        del X, y, data
+
+        metric = cosine
+
+    else:
+        train_data = os.path.join(data_path, 'training.pt')
+        test_data = os.path.join(data_path, 'test.pt')
+        X_train, y_train = convert_ds_to_np(train_data)
+        X_test, y_test = convert_ds_to_np(train_data)
+
+        metric = 'euclidean'
 
     if test_mode:
         X_train = X_train[:100, :]
@@ -50,8 +72,14 @@ def knn(test_mode=False):
         X_test = X_test[:100, :]
         y_test = y_test[:100]
 
+    else:
+        X_train = X_train[:SETTINGS['n_samples'], :]
+        y_train = y_train[:SETTINGS['n_samples']]
+        X_test = X_test[:SETTINGS['n_samples'], :]
+        y_test = y_test[:SETTINGS['n_samples']]
+
     # model set up using pipeline for randomized CV
-    clf = knc(metric='euclidean')
+    clf = knc(metric=metric, algorithm='brute')
 
     cv_opts = {
         'n_neighbors': randint(2,10)
