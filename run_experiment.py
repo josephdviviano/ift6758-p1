@@ -17,7 +17,7 @@ def make_boxplot(a, b, title, output):
     import pandas as pd
     import seaborn as sns
     df = pd.DataFrame()
-    df['experiment'] = ['MNIST Image']*10 + ['MNIST MLP Embeddings']*10
+    df['experiment'] = ['MNIST Image']*10 + ['MNIST CNN Embeddings']*10
     df['accuracy'] = a['accuracy'] + b['accuracy']
 
     plot = sns.boxplot(x='experiment', y='accuracy', data=df)
@@ -85,7 +85,7 @@ def main():
         os.path.join(imgdir, 'knn_test_img_confusion.jpg'))
 
     make_confusion_mat(knn_results_vec['test']['confusion'],
-        'MNIST MLP Embeddings Test Confusion Matrix',
+        'MNIST CNN Embeddings Test Confusion Matrix',
         os.path.join(imgdir, 'knn_test_vec_confusion.jpg'))
 
     with open(os.path.join(filedir, 'knn_stats.csv'), 'w') as f:
@@ -106,7 +106,7 @@ def main():
 
     idx = np.where(hierarchical_results_vec['test']['accuracy'] == np.max(hierarchical_results_vec['test']['accuracy']))[0][0]
     make_confusion_mat(hierarchical_results_vec['test']['confusion'][idx],
-        'MNIST MLP Embeddings Test Confusion Matrix (Best Case)',
+        'MNIST CNN Embeddings Test Confusion Matrix (Best Case)',
         os.path.join(imgdir, 'hier_test_vec_confusion.jpg'))
 
     with open(os.path.join(filedir, 'hier_stats.csv'), 'w') as f:
