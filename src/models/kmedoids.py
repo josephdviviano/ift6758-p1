@@ -13,7 +13,10 @@ def cluster(distance_matrix, n_clusters):
     m = distance_matrix.shape[0]  # number of points
 
     # Pick k  medoids.
+    print('Generating initial medoids...')
     curr_medoids = generate_initial_medoids(distance_matrix, n_clusters)
+    print('Finished generating initial medoids!')
+
     old_medoids = np.array([-1] * n_clusters)  # Doesn't matter what we initialize these to.
     new_medoids = np.array([-1] * n_clusters)
 
@@ -33,14 +36,14 @@ def cluster(distance_matrix, n_clusters):
     return clusters, curr_medoids
 
 def generate_initial_medoids(distance_matrix, n_clusters):
-    distances = distance_matrix.copy()
-    arg_medoid = random.randint(0, distances.shape[1]-1)
-    distances = np.delete(distances, arg_medoid, axis=1)
+    mask = np.ma.masked_array(distance_matrix, np.zeros(distance_matrix.shape))
+    arg_medoid = random.randint(0, distance_matrix.shape[1]-1)
+    mask.mask[:, arg_medoid] = True
     medoids = [arg_medoid]
     for i in range(n_clusters-1):
-        arg_medoid = np.argmax(distances[arg_medoid, :])
+        arg_medoid = mask[arg_medoid, :].argmax(fill_value=0)
         medoids.append(arg_medoid)
-        distances = np.delete(distances, arg_medoid, axis=1)
+        mask.mask[:, arg_medoid] = True
     medoids = np.array(medoids)
     return medoids
 
@@ -77,10 +80,15 @@ class KMedoids(BaseEstimator, ClassifierMixin):
 
         assert (type(self.n_clusters) == int), "n_clusters parameter must be integer"
 
+        print('Generating distance matrix...')
         distance_matrix = pairwise_distances(X, metric=self.metric)
+        print('Finished generating distance matrix!')
+
+        print('Generating k-medoids instance and processing...')
         self.labels_, self.cluster_centers_ = cluster(distance_matrix, self.n_clusters)
+        print('Finished k-medoids!')
+
         self.cluster_medoids_ = X[self.cluster_centers_]
-        print(self.cluster_medoids_)
         self.transformation_ = assignment(self.labels_, y)
 
         return self
@@ -96,7 +104,6 @@ class KMedoids(BaseEstimator, ClassifierMixin):
             getattr(self, "cluster_centers_")
         except AttributeError:
             raise RuntimeError("You must train classifer before predicting data!")
-
         return [self._predict_single(x.reshape((1, -1))) for x in X]
 
     # def score(self, X, y=None):
