@@ -16,3 +16,5 @@ dependencies:
   - ipython
   - scikit-bio # for pcoa
   - scikit-learn
+  - pandas
+  - seaborn
