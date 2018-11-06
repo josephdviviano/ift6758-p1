@@ -20,7 +20,6 @@ def assignment(assigned_clusters, correct_labels):
         clusters_in_label = assigned_clusters[boolean_array_labels]
         for j in range(len(unique_clusters)):
             cost_matrix[i, j] = len(clusters_in_label[clusters_in_label == unique_clusters[j]])
-    print(cost_matrix)
     cost_matrix = 1 - cost_matrix/np.sum(cost_matrix, axis=0)
     classes_index, clusters_index = linear_sum_assignment(cost_matrix)
     transformation = dict(zip(unique_clusters[list(clusters_index)], unique_classes[list(classes_index)]))

@@ -2,6 +2,7 @@ import os
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     TEST_DATA = os.path.join(
         Path(__file__).resolve().parents[2], 'data', 'processed', 'test.pt')
 
-    SUBSAMPLE = 0.40
+    SUBSAMPLE = 0.03
     X_train, y_train = convert_ds_to_np(TRAIN_DATA)
     train_subsample = np.random.choice(len(X_train), int(len(X_train)*SUBSAMPLE), replace=False)
     X_train = X_train[train_subsample]
@@ -52,13 +53,18 @@ if __name__ == '__main__':
     X = PCA(n_components=3).fit_transform(X)
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral,
                edgecolor='k')
-    ax.set_title("Ground truth in extracted feature space")
+    ax.set_title("Ground truth in feature space")
     ax.set_xlabel("1st eigenvector")
     ax.w_xaxis.set_ticklabels([])
     ax.set_ylabel("2nd eigenvector")
     ax.w_yaxis.set_ticklabels([])
     ax.set_zlabel("3rd eigenvector")
     ax.w_zaxis.set_ticklabels([])
+    colors = plt.cm.nipy_spectral((np.unique(y))/9)
+    recs = []
+    for i in np.unique(y):
+        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colors[int(i)]))
+    plt.legend(recs, ['{}'.format(i) for i in np.unique(y)])
     plt.show()
 
     y = predictions_kmedoids_cosine
@@ -67,13 +73,18 @@ if __name__ == '__main__':
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=28, azim=134)
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral,
                edgecolor='k')
-    ax.set_title("Predictions of K-Medoids with cosine similarity in extracted feature space")
+    ax.set_title("Predictions of K-Medoids with cosine similarity in feature space")
     ax.set_xlabel("1st eigenvector")
     ax.w_xaxis.set_ticklabels([])
     ax.set_ylabel("2nd eigenvector")
     ax.w_yaxis.set_ticklabels([])
     ax.set_zlabel("3rd eigenvector")
     ax.w_zaxis.set_ticklabels([])
+    colors = plt.cm.nipy_spectral((np.unique(y)) / 9)
+    recs = []
+    for i in np.unique(y):
+        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colors[int(i)]))
+    plt.legend(recs, ['{}'.format(i) for i in np.unique(y)])
     plt.show()
 
     ### EUCLIDEAN ###
@@ -85,13 +96,18 @@ if __name__ == '__main__':
     X = PCA(n_components=3).fit_transform(X)
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral,
                edgecolor='k')
-    ax.set_title("Ground truth in pixel feature space")
+    ax.set_title("Ground truth in raw pixel space")
     ax.set_xlabel("1st eigenvector")
     ax.w_xaxis.set_ticklabels([])
     ax.set_ylabel("2nd eigenvector")
     ax.w_yaxis.set_ticklabels([])
     ax.set_zlabel("3rd eigenvector")
     ax.w_zaxis.set_ticklabels([])
+    colors = plt.cm.nipy_spectral((np.unique(y)) / 9)
+    recs = []
+    for i in np.unique(y):
+        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colors[int(i)]))
+    plt.legend(recs, ['{}'.format(i) for i in np.unique(y)])
     plt.show()
 
     y = predictions_kmedoids_euclidean
@@ -100,11 +116,16 @@ if __name__ == '__main__':
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=28, azim=134)
     ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral,
                edgecolor='k')
-    ax.set_title("Predictions of K-Medoids with euclidean distance in pixel feature space")
+    ax.set_title("Predictions of K-Medoids with euclidean distance in raw pixel space")
     ax.set_xlabel("1st eigenvector")
     ax.w_xaxis.set_ticklabels([])
     ax.set_ylabel("2nd eigenvector")
     ax.w_yaxis.set_ticklabels([])
     ax.set_zlabel("3rd eigenvector")
     ax.w_zaxis.set_ticklabels([])
+    colors = plt.cm.nipy_spectral((np.unique(y)) / 9)
+    recs = []
+    for i in np.unique(y):
+        recs.append(mpatches.Rectangle((0, 0), 1, 1, fc=colors[int(i)]))
+    plt.legend(recs, ['{}'.format(i) for i in np.unique(y)])
     plt.show()
