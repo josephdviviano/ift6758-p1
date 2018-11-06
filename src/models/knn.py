@@ -3,44 +3,34 @@ from copy import copy
 from pathlib import Path
 from scipy.stats import randint
 from sklearn.metrics import f1_score, accuracy_score, confusion_matrix
-from sklearn.metrics.pairwise import cosine_distances
 from sklearn.model_selection import StratifiedKFold, RandomizedSearchCV
 from sklearn.neighbors import KNeighborsClassifier as knc
 from sklearn.pipeline import Pipeline
-from numpy.linalg import norm
+from src.models.helper import convert_ds_to_np, cosine
 import numpy as np
 import os
 import torch
 
 
-SETTINGS = {
-    'cv_iter': 100,
-    'cv_score': 'accuracy',
-    'n_cv': 3,
-    'n_folds': 10,
-    'n_samples': 1000,
-}
-
-RESULTS = {
-    'test':  {'accuracy': None, 'confusion': None},
-    'train': {'accuracy': [], 'confusion': []},
-    'best_model': None, 'best_acc' : 0
-}
-
-
-def cosine(x, y):
-    return(1 - (x.dot(y) / (norm(x) + norm(y))))
-
-def convert_ds_to_np(D):
-    """torch ds --> numpy matrix. x becomes a (n x m) matrix."""
-    X, y = torch.load(D)
-    X = X.numpy().swapaxes(1,3).squeeze()            # make (n x row x col)
-    X = X.reshape(X.shape[0], X.shape[1]*X.shape[2]) # make (n x m)
-
-    return(X, y.numpy())
-
 
 def knn(test_mode=False, custom_data=False):
+
+    results = {
+        'test':  {'accuracy': None, 'confusion': None},
+        'train': {'accuracy': [], 'confusion': []},
+        'best_model': None, 'best_acc' : 0
+    }
+
+    settings = {
+        'cv_iter': 100,
+        'cv_score': 'accuracy',
+        'n_cv': 3,
+        'n_folds': 10,
+        'n_samples': 2000,
+    }
+
+    if test_mode:
+        settings['n_samples'] = 100
 
     data_path = os.path.join(
         Path(__file__).resolve().parents[2], 'data', 'processed')
@@ -66,17 +56,10 @@ def knn(test_mode=False, custom_data=False):
 
         metric = 'euclidean'
 
-    if test_mode:
-        X_train = X_train[:100, :]
-        y_train = y_train[:100]
-        X_test = X_test[:100, :]
-        y_test = y_test[:100]
-
-    else:
-        X_train = X_train[:SETTINGS['n_samples'], :]
-        y_train = y_train[:SETTINGS['n_samples']]
-        X_test = X_test[:SETTINGS['n_samples'], :]
-        y_test = y_test[:SETTINGS['n_samples']]
+    X_train = X_train[:settings['n_samples'], :]
+    y_train = y_train[:settings['n_samples']]
+    X_test = X_test[:settings['n_samples'], :]
+    y_test = y_test[:settings['n_samples']]
 
     # model set up using pipeline for randomized CV
     clf = knc(metric=metric, algorithm='brute')
@@ -86,11 +69,11 @@ def knn(test_mode=False, custom_data=False):
     }
 
     model = RandomizedSearchCV(
-        clf, cv_opts, n_jobs=-1, n_iter=SETTINGS['cv_iter'],
-        cv=SETTINGS['n_cv'], scoring=SETTINGS['cv_score']
+        clf, cv_opts, n_jobs=-1, n_iter=settings['cv_iter'],
+        cv=settings['n_cv'], scoring=settings['cv_score']
     )
 
-    kf = StratifiedKFold(n_splits=SETTINGS['n_folds'], shuffle=True)
+    kf = StratifiedKFold(n_splits=settings['n_folds'], shuffle=True)
 
     for i, (train_idx, valid_idx) in enumerate(kf.split(X_train, y_train)):
         X_trn = X_train[train_idx]
@@ -102,21 +85,20 @@ def knn(test_mode=False, custom_data=False):
 
         y_pred = model.predict(X_vld)
         this_acc = accuracy_score(y_pred, y_vld)
-        RESULTS['train']['accuracy'].append(this_acc)
-        RESULTS['train']['confusion'].append(confusion_matrix(y_pred, y_vld))
+        results['train']['accuracy'].append(this_acc)
+        results['train']['confusion'].append(confusion_matrix(y_pred, y_vld))
 
-        if this_acc > RESULTS['best_acc']:
+        if this_acc > results['best_acc']:
             print('[{}/{}]: new model found {}/{}'.format(
-                i+1, SETTINGS['n_folds'], this_acc, RESULTS['best_acc']))
-            RESULTS['best_acc'] = this_acc
-            RESULTS['best_model'] = copy(model)
-
+                i+1, settings['n_folds'], this_acc, results['best_acc']))
+            results['best_acc'] = this_acc
+            results['best_model'] = copy(model)
 
     # get test performance with best model:
-    y_pred = RESULTS['best_model'].predict(X_test)
-    RESULTS['test']['accuracy'] = accuracy_score(y_pred, y_test)
-    RESULTS['test']['confusion'] = confusion_matrix(y_pred, y_test)
+    y_pred = results['best_model'].predict(X_test)
+    results['test']['accuracy'] = accuracy_score(y_pred, y_test)
+    results['test']['confusion'] = confusion_matrix(y_pred, y_test)
 
-    return(RESULTS)
+    return(results)
 
 
