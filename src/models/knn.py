@@ -12,7 +12,6 @@ import os
 import torch
 
 
-
 def knn(test_mode=False, custom_data=False):
 
     results = {
