@@ -12,7 +12,7 @@ import os
 import torch
 
 
-def knn(test_mode=False, custom_data=False):
+def knn(test_mode=False, custom_data=False, dist_metric='euclidean'):
 
     results = {
         'test':  {'accuracy': None, 'confusion': None},
@@ -34,6 +34,13 @@ def knn(test_mode=False, custom_data=False):
     data_path = os.path.join(
         Path(__file__).resolve().parents[2], 'data', 'processed')
 
+    if dist_metric == 'euclidean':
+        metric = 'euclidean'
+    elif dist_metric == 'cosine':
+        metric = cosine
+    else:
+        raise Exception('invalid dist_metric defined')
+
     if custom_data:
         data = np.load(os.path.join(data_path, 'vectors.npy'))
         X = data.item()['data']
@@ -45,15 +52,11 @@ def knn(test_mode=False, custom_data=False):
         y_test = y[60000:]
         del X, y, data
 
-        metric = cosine
-
     else:
         train_data = os.path.join(data_path, 'training.pt')
         test_data = os.path.join(data_path, 'test.pt')
         X_train, y_train = convert_ds_to_np(train_data)
         X_test, y_test = convert_ds_to_np(train_data)
-
-        metric = 'euclidean'
 
     X_train = X_train[:settings['n_samples'], :]
     y_train = y_train[:settings['n_samples']]

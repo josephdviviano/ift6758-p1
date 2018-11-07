@@ -66,9 +66,11 @@ def main():
 
     test = False
     knn_results_img = knn(test_mode=test)
-    knn_results_vec = knn(test_mode=test, custom_data=True)
+    knn_results_vec = knn(test_mode=test, custom_data=True, dist_metric='cosine')
+    knn_results_vec_euc = knn(test_mode=test, custom_data=True)
     hierarchical_results_img = hierarchical(test_mode=test)
-    hierarchical_results_vec = hierarchical(test_mode=test, custom_data=True)
+    hierarchical_results_vec = hierarchical(test_mode=test, custom_data=True, dist_metric='cosine')
+    hierarchical_results_vec_euc = hierarchical(test_mode=test, custom_data=True)
 
     print('***done!***')
 
@@ -88,10 +90,15 @@ def main():
         'MNIST CNN Embeddings Test Confusion Matrix',
         os.path.join(imgdir, 'knn_test_vec_confusion.jpg'))
 
+    make_confusion_mat(knn_results_vec_euc['test']['confusion'],
+        'MNIST CNN Embeddings Test Confusion Matrix (Euclidean)',
+        os.path.join(imgdir, 'knn_test_vec_confusion_euc.jpg'))
+
     with open(os.path.join(filedir, 'knn_stats.csv'), 'w') as f:
-        f.write('img,vec\n{},{}'.format(
+        f.write('img,vec,vec_euc\n{},{},{}'.format(
             knn_results_img['test']['accuracy'],
-            knn_results_vec['test']['accuracy'])
+            knn_results_vec['test']['accuracy'],
+            knn_results_vec_euc['test']['accuracy'])
         )
 
     # hierarchical results
@@ -108,6 +115,11 @@ def main():
     make_confusion_mat(hierarchical_results_vec['test']['confusion'][idx],
         'MNIST CNN Embeddings Test Confusion Matrix (Best Case)',
         os.path.join(imgdir, 'hier_test_vec_confusion.jpg'))
+
+    idx = np.where(hierarchical_results_vec_euc['test']['accuracy'] == np.max(hierarchical_results_vec_euc['test']['accuracy']))[0][0]
+    make_confusion_mat(hierarchical_results_vec_euc['test']['confusion'][idx],
+        'MNIST CNN Embeddings Test Confusion Matrix (Best Case, Euclidean)',
+        os.path.join(imgdir, 'hier_test_vec_confusion_euc.jpg'))
 
     with open(os.path.join(filedir, 'hier_stats.csv'), 'w') as f:
         f.write('lost_subject\n{}'.format(

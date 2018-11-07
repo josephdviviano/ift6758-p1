@@ -11,7 +11,7 @@ import os
 import torch
 
 
-def hierarchical(test_mode=False, custom_data=False):
+def hierarchical(test_mode=False, custom_data=False, dist_metric='euclidean'):
 
     data_path = os.path.join(
         Path(__file__).resolve().parents[2], 'data', 'processed')
@@ -21,10 +21,17 @@ def hierarchical(test_mode=False, custom_data=False):
         'best_model': None, 'best_acc' : 0, 'lost_subjects' : 0
     }
 
-    settings = {'n_repetitions': 10, 'n_samples': 2000}
+    settings = {'n_repetitions': 10, 'n_samples': 2000, 'linkage': 'average'}
 
     if test_mode:
         settings['n_samples'] = 100
+
+    if dist_metric == 'euclidean':
+        affinity = 'euclidean'
+    elif dist_metric == 'cosine':
+        affinity = 'cosine'
+    else:
+        raise Exception('invalid dist_metric defined')
 
     if custom_data:
         data = np.load(os.path.join(data_path, 'vectors.npy'))
@@ -32,9 +39,6 @@ def hierarchical(test_mode=False, custom_data=False):
         y = data.item()['labels']
 
         del data
-
-        affinity = 'cosine'
-        linkage = 'average'
 
     else:
         train_data = os.path.join(data_path, 'training.pt')
@@ -46,10 +50,7 @@ def hierarchical(test_mode=False, custom_data=False):
         X = np.vstack((X_train, X_test))
         y = np.concatenate((y_train, y_test))
 
-        affinity = 'euclidean'
-        linkage = 'average'
-
-    model = hc(n_clusters=10, affinity=affinity, linkage=linkage)
+    model = hc(n_clusters=10, affinity=affinity, linkage=settings['linkage'])
 
     # remove subject with no activation values
     bad_idx = np.where(np.sum(X, axis=1) == 0)[0]
